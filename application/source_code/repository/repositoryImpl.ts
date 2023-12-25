@@ -1,9 +1,11 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
-import { Repository } from "./repository";
+import { DatabaseRepo, ApiRepo } from "./repository";
 import { cacheConnType, cache } from "./cache";
 import { AnimeApiRequest } from "../model/animeAPI/animeApiRequest";
+import { MongoClient } from "mongodb";
+import { urlToHttpOptions } from "url";
 
-export class RepositoryImpl implements Partial<Repository> {
+export class ApiImpl implements ApiRepo {
   public async animeApi(req: AnimeApiRequest): Promise<any> {
     try {
       console.log("Inside anime repository");
@@ -48,7 +50,7 @@ export class RepositoryImpl implements Partial<Repository> {
           .catch((err: AxiosError) => {
             console.log("Axios Error in Repository", err);
             throw err;
-          })
+          });
       }
     } catch (e) {
       console.log("Error in repository implementation", e);
@@ -57,13 +59,39 @@ export class RepositoryImpl implements Partial<Repository> {
   }
 }
 
-export class DatabaseImpl implements Partial<Repository> {
-  public async mongoDb(req: any): Promise<any> {
+export class DatabaseImpl implements DatabaseRepo {
+  #mongoConn: any; //mongoDb connection
+
+  /**Make connection with mongoDb
+   * Make connection via mobile network if it fails through home/local wifi's
+   */
+  private async mongoDbConnection(): Promise<any> {
+    try {
+      console.log("making connection");
+      const url = process.env.MONGO_URL!;
+      const client = new MongoClient(url);
+      await client.connect();
+      client.db(process.env.DB_NAME);
+      console.log(
+        "Pinged your deployment. You successfully connected to MongoDB!"
+      );
+      return client;
+    } catch (e) {
+      console.log("Error in making connection", e);
+      throw e;
+    }
+  }
+
+  /**Query mongodb*/
+  public async mongoDb(): Promise<any> {
     try {
       console.log("Inside mongoDb");
+      this.#mongoConn = await this.mongoDbConnection();
     } catch (e) {
       console.log("Error in database implementation", e);
-      throw e;
+      // throw e;
+    } finally {
+      if (this.#mongoConn) await this.#mongoConn.close();
     }
   }
 }

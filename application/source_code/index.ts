@@ -1,9 +1,9 @@
 import express, { json } from "express";
-import { controller } from "./controller/controllerImpl";
+import { animeController } from "./controller/controllerImpl";
 import { config } from "dotenv";
 
 //environment variable configuration
-config({ path: "F:\\coding\\Typescript_express app\\app\\properties.env" });
+config({ path: "F:\\coding\\Typescript_express app\\expressApp\\app\\properties.env" });
 
 const expressapp = express(),
   route = express.Router();
@@ -23,18 +23,18 @@ route.get("/", (req, res) => {
 /**getting data from anime API */
 route.get("/anime/:id", async (req, res) => {
   console.log("Inside Anime url route", req.params);
-  const response = await controller(req.params);
+  const response = await animeController(req.params);
   console.log("Response from anime API - ", response);
   res.send(response.statusMessage).status(response.status);
 });
 
-/**posting data in to database */
-route.post("/mongoDb", async (req, res) => {
-  console.log("Inside mongoDb url route", req.params);
-  const response = await controller(req.body.params);
-  console.log("Response from posting data into mongoDb - ", response);
-  res.send(response.statusMessage).status(response.status);
-});
+// /**posting data in to database */
+// route.post("/mongoDb", async (req, res) => {
+//   console.log("Inside mongoDb url route", req.params);
+//   const response = await controller(req.body.params);
+//   console.log("Response from posting data into mongoDb - ", response);
+//   res.send(response.statusMessage).status(response.status);
+// });
 
 // route.post("/goCheck", async (req, res) => {
 //   console.log("Inside go url route");

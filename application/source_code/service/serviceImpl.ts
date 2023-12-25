@@ -1,13 +1,15 @@
-import { Repository } from "../repository/repository";
+import { ApiRepo, DatabaseRepo } from "../repository/repository";
 import { xml2js } from "xml-js";
 import { Service } from "./service";
 import { AnimeApiResponse } from "../model/animeAPI/animeApiResponse";
 import { AnimeApiRequest } from "../model/animeAPI/animeApiRequest";
 
 export class ServiceImpl implements Service {
-  #repo: Repository; //declaring private field
-  constructor(repository: Repository) {
-    this.#repo = repository;
+  #apiRepo: ApiRepo; //declaring private field
+  #dbRepo: DatabaseRepo;
+  constructor(apiRepo: ApiRepo, dbRepo: DatabaseRepo) {
+    this.#apiRepo = apiRepo;
+    this.#dbRepo = dbRepo;
   }
 
   /**
@@ -15,10 +17,10 @@ export class ServiceImpl implements Service {
    * @returns the required anime by the user
    **/
 
-  public async animeService(req:AnimeApiRequest): Promise<Record<any, any>> {
+  public async animeService(req: AnimeApiRequest): Promise<Record<any, any>> {
     try {
       console.log("Inside anime service");
-      const response = await this.#repo.animeApi(req);
+      const response = await this.#apiRepo.animeApi(req);
       // console.log("Response in service layer", response);
 
       const xml2jsResponse: any = xml2js(response, { compact: true });
@@ -46,7 +48,8 @@ export class ServiceImpl implements Service {
               t?.["_attributes"]?.["xml:lang"] == "en" &&
               t?.["_attributes"]?.type == "official"
           )?.["_text"] || "english title unavailable",
-        similarAnime: //do it with object check for response
+        //do it with object check for response
+        similarAnime:
           xml2jsResponse?.anime?.similaranime?.anime?.map(
             (a: Record<string, any>) => ({
               animeName: a?.["_text"] || "Title unavailable",
@@ -56,7 +59,8 @@ export class ServiceImpl implements Service {
                 "episode count is unavailable for this anime",
             })
           ) || "information unvailable",
-        relatedAnime: (() => //do it for array with ternary and isArray check
+        relatedAnime: (() =>
+          //do it for array with ternary and isArray check
           !xml2jsResponse?.anime?.relatedanime?.["_text"] &&
           !xml2jsResponse?.anime?.relatedanime?.["_attributes"]?.type
             ? "information unavailable"
@@ -69,7 +73,9 @@ export class ServiceImpl implements Service {
 
       console.log("animeObject resp - ", animeResponse);
 
-      
+      const databaseResponse = await this.#dbRepo.mongoDb();
+
+      console.log("Database response", databaseResponse);
 
       return animeResponse;
     } catch (e) {
