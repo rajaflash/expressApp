@@ -1,9 +1,15 @@
+console.log("hello in index");
 import express, { json } from "express";
+console.log("dood");
 import { animeController } from "./controller/controllerImpl";
+console.log("hey!!");
 import { config } from "dotenv";
+// import { AnimeApiRequest } from "./model/animeAPI/animeApiRequest";
 
 //environment variable configuration
-config({ path: "F:\\coding\\Typescript_express app\\expressApp\\app\\properties.env" });
+config({
+  path: "F:\\coding\\Typescript_expressApp\\expressApp\\app\\properties.env",
+});
 
 const expressapp = express(),
   route = express.Router();
@@ -21,11 +27,17 @@ route.get("/", (req, res) => {
 });
 
 /**getting data from anime API */
-route.get("/anime/:id", async (req, res) => {
-  console.log("Inside Anime url route", req.params);
-  const response = await animeController(req.params);
+route.get("/anime", async (req, res) => {
+  console.log("Inside Anime url route", req.query);
+
+  /**to avoid a type error from an express built interface called parsedQs*/
+  const request: any = {
+    animeId: req.query["animeId"],
+    customerId: req.query["customerId"],
+  };
+  const response = await animeController(request);
   console.log("Response from anime API - ", response);
-  res.send(response.statusMessage).status(response.status);
+  res.status(response.status).send(response.statusMessage);
 });
 
 // /**posting data in to database */

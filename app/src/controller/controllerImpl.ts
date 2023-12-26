@@ -1,3 +1,5 @@
+console.log("Dei inside controller");
+
 import { ApiImpl, DatabaseImpl } from "../repository/repositoryImpl";
 import { ServiceImpl } from "../service/serviceImpl";
 import { Service } from "../service/service";
@@ -11,16 +13,13 @@ class ControllerImpl implements Controller {
   }
 
   public animeController = async (req: AnimeApiRequest): Promise<any> => {
-    // public async ControllerApi(): Promise<Record<any, any>> {
     try {
       console.log("Inside anime controller");
       const response = await this.#service.animeService(req);
-      // const response = await serviceLayer.animeService();
-      // console.log("Response in controller layer", response);
       return { status: 200, statusMessage: response };
     } catch (e) {
       console.log("Catch method of controller layer", e);
-      return { status: 400, statusMessage: e };
+      return { status: 500, statusMessage: e };
     }
   };
 
@@ -38,6 +37,7 @@ class ControllerImpl implements Controller {
   //   }
   // };
 }
+
 
 const apiImpl = new ApiImpl();
 const databaseImpl = new DatabaseImpl();

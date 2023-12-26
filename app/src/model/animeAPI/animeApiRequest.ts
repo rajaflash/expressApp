@@ -1,3 +1,4 @@
 export interface AnimeApiRequest {
-    readonly id : string
+  readonly animeId: string;
+  readonly customerId: string;
 }

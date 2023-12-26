@@ -73,7 +73,7 @@ export class ServiceImpl implements Service {
 
       console.log("animeObject resp - ", animeResponse);
 
-      const databaseResponse = await this.#dbRepo.mongoDb();
+      const databaseResponse =  this.#dbRepo.mongoDb(animeResponse,req);
 
       console.log("Database response", databaseResponse);
 

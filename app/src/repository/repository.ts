@@ -7,5 +7,8 @@ export interface ApiRepo {
 
 export interface DatabaseRepo {
   /**mongoDb will insert/update the request*/
-  mongoDb(): Promise<any>;
+  mongoDb(
+    processedRequest: Record<string, any>,
+    customerRequest: Record<any, any>
+  ): Promise<any>;
 }
