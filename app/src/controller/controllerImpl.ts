@@ -1,10 +1,8 @@
-console.log("Dei inside controller");
-
 import { ApiImpl, DatabaseImpl } from "../repository/repositoryImpl";
 import { ServiceImpl } from "../service/serviceImpl";
 import { Service } from "../service/service";
 import { Controller } from "./controller";
-import { AnimeApiRequest } from "../model/animeAPI/animeApiRequest";
+import { AnimeApiRequest, PostAnimeRequest } from "../model/animeAPI/animeApiRequest";
 
 class ControllerImpl implements Controller {
   #service: Service;
@@ -12,37 +10,34 @@ class ControllerImpl implements Controller {
     this.#service = service;
   }
 
-  public animeController = async (req: AnimeApiRequest): Promise<any> => {
+  public getAnimeController = async (req: AnimeApiRequest): Promise<any> => {
     try {
-      console.log("Inside anime controller");
-      const response = await this.#service.animeService(req);
+      console.log("Inside get anime controller");
+      const response = await this.#service.getAnimeService(req);
       return { status: 200, statusMessage: response };
     } catch (e) {
-      console.log("Catch method of controller layer", e);
-      return { status: 500, statusMessage: e };
+      console.log("Catch method of get anime controller layer", e);
+      throw { status: 500, statusMessage: e };
     }
   };
 
-  // public mongodbController = async (req: any): Promise<any> => {
-  //   // public async ControllerApi(): Promise<Record<any, any>> {
-  //   try {
-  //     console.log("Inside anime controller");
-  //     const response = await this.#service.(req);
-  //     // const response = await serviceLayer.animeService();
-  //     // console.log("Response in controller layer", response);
-  //     return { status: 200, statusMessage: response };
-  //   } catch (e) {
-  //     console.log("Catch method of controller layer", e);
-  //     return { status: 400, statusMessage: e };
-  //   }
-  // };
+  public postAnimeController = async (req: PostAnimeRequest): Promise<any> => {
+    try {
+      console.log("Inside post anime controller");
+      const response = await this.#service.postAnimeService(req);
+      return { status: 200, statusMessage: response };
+    } catch (e) {
+      console.log("Catch method of post anime controller layer", e);
+      throw { status: 500, statusMessage: e };
+    }
+  };
 }
-
 
 const apiImpl = new ApiImpl();
 const databaseImpl = new DatabaseImpl();
 const serviceLayer = new ServiceImpl(apiImpl, databaseImpl);
 const controllerLayer = new ControllerImpl(serviceLayer);
 
-export const animeController = controllerLayer.animeController;
+export const getAnimeController = controllerLayer.getAnimeController;
+export const postAnimeController = controllerLayer.postAnimeController;
 // export const animeController = controllerLayer.mongodbController;

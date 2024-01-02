@@ -1,5 +1,12 @@
-import { AnimeApiRequest } from "../model/animeAPI/animeApiRequest";
+import {
+  AnimeApiRequest,
+  PostAnimeRequest,
+} from "../model/animeAPI/animeApiRequest";
 
 export interface Controller {
-  animeController(req:AnimeApiRequest): Promise<Record<any, any>>;
+  /**Handles get requests for anime */
+  getAnimeController(req: AnimeApiRequest): Promise<Record<any, any>>;
+
+  /**Handles post requests for anime */
+  postAnimeController(req: PostAnimeRequest): Promise<any>;
 }

@@ -1,8 +1,9 @@
 import { ApiRepo, DatabaseRepo } from "../repository/repository";
 import { xml2js } from "xml-js";
 import { Service } from "./service";
-import { AnimeApiResponse } from "../model/animeAPI/animeApiResponse";
-import { AnimeApiRequest } from "../model/animeAPI/animeApiRequest";
+import { AnimeApiResponse, postAnimeResponse } from "../model/animeAPI/animeApiResponse";
+import { AnimeApiRequest, PostAnimeRequest } from "../model/animeAPI/animeApiRequest";
+
 
 export class ServiceImpl implements Service {
   #apiRepo: ApiRepo; //declaring private field
@@ -17,11 +18,10 @@ export class ServiceImpl implements Service {
    * @returns the required anime by the user
    **/
 
-  public async animeService(req: AnimeApiRequest): Promise<Record<any, any>> {
+  public async getAnimeService(req: AnimeApiRequest): Promise<AnimeApiResponse> {
     try {
-      console.log("Inside anime service");
-      const response = await this.#apiRepo.animeApi(req);
-      // console.log("Response in service layer", response);
+      console.log("Inside get anime service");
+      const response: string = await this.#apiRepo.animeApi(req);
 
       const xml2jsResponse: any = xml2js(response, { compact: true });
       console.log("JSON response", JSON.stringify(xml2jsResponse));
@@ -62,24 +62,43 @@ export class ServiceImpl implements Service {
         relatedAnime: (() =>
           //do it for array with ternary and isArray check
           !xml2jsResponse?.anime?.relatedanime?.["_text"] &&
-          !xml2jsResponse?.anime?.relatedanime?.["_attributes"]?.type
+            !xml2jsResponse?.anime?.relatedanime?.["_attributes"]?.type
             ? "information unavailable"
             : {
-                animeName: xml2jsResponse?.anime?.relatedanime?.["_text"],
-                relation:
-                  xml2jsResponse?.anime?.relatedanime?.["_attributes"]?.type,
-              })(),
+              animeName: xml2jsResponse?.anime?.relatedanime?.["_text"],
+              relation:
+                xml2jsResponse?.anime?.relatedanime?.["_attributes"]?.type,
+            })(),
       };
 
       console.log("animeObject resp - ", animeResponse);
 
-      const databaseResponse =  this.#dbRepo.mongoDb(animeResponse,req);
-
-      console.log("Database response", databaseResponse);
-
       return animeResponse;
     } catch (e) {
       console.log("Inside catch method");
+      throw e;
+    }
+  }
+
+  /**
+   * @param anime and customere details
+   * @returns the acknowledgement message with customer and animeId
+   **/
+
+  public async postAnimeService(req: PostAnimeRequest): Promise<postAnimeResponse> {
+    try {
+      console.log("Inside post Anime service", req);
+
+      const databaseResponse = await this.#dbRepo.mongoDb(req);
+
+      console.log("Database response", databaseResponse);
+      return {
+        customerId: req.customerId,
+        message: "Anime details posted successfully",
+        animeId: req.animeDetails.similarAnime.map((anime) => anime.animeId),
+      };
+    } catch (e) {
+      console.log("Error in post Anime service", e);
       throw e;
     }
   }

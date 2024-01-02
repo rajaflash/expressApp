@@ -1,14 +1,20 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { DatabaseRepo, ApiRepo } from "./repository";
 import { cacheConnType, cache } from "./cache";
-import { AnimeApiRequest } from "../model/animeAPI/animeApiRequest";
-import { MongoClient, Collection } from "mongodb";
+import { AnimeApiRequest, PostAnimeRequest } from "../model/animeAPI/animeApiRequest";
+import { MongoClient, Collection, UpdateResult, Document } from "mongodb";
 
 let mongoConn: MongoClient;
 let collectionInstance: Collection;
 
 export class ApiImpl implements ApiRepo {
-  public async animeApi(req: AnimeApiRequest): Promise<any> {
+
+  /**
+   * @param animeId
+   * @returns An Xml String value from API/Cache
+   */
+
+  public async animeApi(req: AnimeApiRequest): Promise<string> {
     try {
       console.log("Inside anime repository");
 
@@ -24,59 +30,56 @@ export class ApiImpl implements ApiRepo {
       if (cachedAnime) {
         console.log(`Data available in cache for anime id - ${req.animeId}`);
         return cachedAnime;
-      } else {
-        console.log(`Data unavailable in cache for anime id - ${req.animeId}`);
-        const config: AxiosRequestConfig = {
-          url: `http://api.anidb.net:9001/httpapi?request=anime&client=${process.env.CLIENT_NAME}&clientver=${process.env.CLIENT_VERSION}&protover=${process.env.PROTOTYPE_NUMBER}&aid=${req.animeId}`,
-          method: "get",
-        };
-
-        console.log("configuration - ", config);
-
-        return await axios(config)
-          .then(async (resp: AxiosResponse) => {
-            console.log(
-              "type of response data from anime open API",
-              typeof resp.data
-            );
-            const setCache = await cacheImplementation.set(cacheConn, {
-              type: "string",
-              key: req.animeId,
-              value: resp.data,
-              expiryTime: 60 * 60 * 12,
-            });
-            await cacheConn.disconnect();
-            console.log("setCache details - ", setCache);
-            return resp.data;
-          })
-          .catch((err: AxiosError) => {
-            console.log("Axios Error in Repository", err);
-            throw err;
-          });
       }
+
+      console.log(`Data unavailable in cache for anime id - ${req.animeId}`);
+      const config: AxiosRequestConfig = {
+        url: `http://api.anidb.net:9001/httpapi?request=anime&client=${process.env.CLIENT_NAME}&clientver=${process.env.CLIENT_VERSION}&protover=${process.env.PROTOTYPE_NUMBER}&aid=${req.animeId}`,
+        method: "get",
+      };
+
+      console.log("configuration - ", config);
+
+      return await axios(config)
+        .then(async (resp: AxiosResponse) => {
+          console.log(
+            "type of response data from anime open API",
+            typeof resp.data
+          );
+          const setCache = await cacheImplementation.set(cacheConn, {
+            type: "string",
+            key: req.animeId,
+            value: resp.data,
+            expiryTime: 60 * 60 * 12,
+          });
+          await cacheConn.disconnect();
+          console.log("setCache details - ", setCache);
+          return resp.data;
+        })
+        .catch((err: AxiosError) => {
+          console.log("Axios Error in Repository", err);
+          throw err;
+        });
+
     } catch (e) {
       console.log("Error in repository implementation", e);
       throw e;
     }
   }
+
 }
 
 export class DatabaseImpl implements DatabaseRepo {
-  /**Query mongodb*/
-  public async mongoDb(
-    processedRequest: Record<string, any>,
-    customerRequest: Record<string, string>
-  ): Promise<any> {
+
+  /**update/Insert into mongodb*/
+  public async mongoDb(processedRequest: PostAnimeRequest): Promise<UpdateResult<Document>> {
     try {
-      console.log(
-        "Inside mongoDb with request - ",
-        processedRequest,
-        customerRequest
-      );
+      console.log("Inside mongoDb with request - ", processedRequest);
       await this.mongoDbConnection();
-      processedRequest["customerId"] = customerRequest["customerId"];
-      const insert = await this.insert(processedRequest);
-      return insert;
+      const upsert: UpdateResult<Document> = await this.upsert(
+        processedRequest
+      );
+      return upsert;
     } catch (e) {
       console.log("Error in database implementation", e);
       throw e;
@@ -106,12 +109,19 @@ export class DatabaseImpl implements DatabaseRepo {
     }
   }
 
-  private async insert(request: { [key: string]: any }): Promise<any> {
+  private async upsert(request: PostAnimeRequest): Promise<UpdateResult<Document>> {
     try {
-      console.log("Insertion operation");
-      const response = await collectionInstance.insertOne(request);
+      console.log("Upsertion operation");
+      const response = await collectionInstance.updateOne(
+        { customerId: request.customerId },
+        {
+          $push: { animeDetails: request.animeDetails },
+          $setOnInsert: { customerDetails: request.customerDetails },
+        },
+        { upsert: true }
+      );
       console.log("Insertion operation response", response);
-      return "Successfull Insertion";
+      return response;
     } catch (e) {
       console.log("Error in mongoDb insertion", e);
       throw e;
