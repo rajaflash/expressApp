@@ -37,7 +37,7 @@ expressapp.get("/anime", async (req, res) => {
     res.status(response.status).send(response.statusMessage);
   } catch (e: any) {
     console.log("error from anime API - ", e);
-    res.status(e.status).send(e);
+    res.status(e.status).send(e.statusMessage);
   }
 });
 
@@ -47,7 +47,7 @@ expressapp.post("/postAnime", async (req, res) => {
     console.log("Inside postAnime url route", req.body);
     const response = await postAnimeController(req.body);
     console.log("Response from postAnime route- ", response);
-    res.send(response.statusMessage).status(response.status);
+    res.status(response.status).send({ "Error": response.statusMessage });
   } catch (e: any) {
     console.log("Error from postAnime route- ", e);
     res.status(e.status).send(e)

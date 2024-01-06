@@ -50,7 +50,7 @@ export class ServiceImpl implements Service {
           )?.["_text"] || "english title unavailable",
         //do it with object check for response
         similarAnime:
-          xml2jsResponse?.anime?.similaranime?.anime?.map(
+          Array.isArray(xml2jsResponse?.anime?.similaranime?.anime) ? xml2jsResponse?.anime?.similaranime?.anime?.map(
             (a: Record<string, any>) => ({
               animeName: a?.["_text"] || "Title unavailable",
               animeId: a?.["_attributes"]?.id || "anime Id unavailable",
@@ -58,16 +58,22 @@ export class ServiceImpl implements Service {
                 a?.["_attributes"]?.total ||
                 "episode count is unavailable for this anime",
             })
-          ) || "information unvailable",
+          ) : {
+            animeName: xml2jsResponse?.anime?.similaranime?.anime?.["_text"] || "Title unavailable",
+            animeId: xml2jsResponse?.anime?.similaranime?.anime?.["_attributes"]?.id || "anime Id unavailable",
+            episodeCount:
+              xml2jsResponse?.anime?.similaranime?.anime?.["_attributes"]?.total ||
+              "episode count is unavailable for this anime",
+          } || "information unavailable",
         relatedAnime: (() =>
           //do it for array with ternary and isArray check
-          !xml2jsResponse?.anime?.relatedanime?.["_text"] &&
-            !xml2jsResponse?.anime?.relatedanime?.["_attributes"]?.type
+          !xml2jsResponse?.anime?.relatedanime?.anime["_text"] &&
+            !xml2jsResponse?.anime?.relatedanime?.anime["_attributes"]?.type
             ? "information unavailable"
             : {
-              animeName: xml2jsResponse?.anime?.relatedanime?.["_text"],
+              animeName: xml2jsResponse?.anime?.relatedanime?.anime["_text"],
               relation:
-                xml2jsResponse?.anime?.relatedanime?.["_attributes"]?.type,
+                xml2jsResponse?.anime?.relatedanime?.anime["_attributes"]?.type,
             })(),
       };
 
@@ -92,10 +98,15 @@ export class ServiceImpl implements Service {
       const databaseResponse = await this.#dbRepo.mongoDb(req);
 
       console.log("Database response", databaseResponse);
+
       return {
         customerId: req.customerId,
         message: "Anime details posted successfully",
-        animeId: req.animeDetails.similarAnime.map((anime) => anime.animeId),
+        similarAnimeIds: Array.isArray(req.animeDetails.similarAnime) //check array/object/string.
+          ? req.animeDetails.similarAnime.map((anime) => anime.animeId)
+          : req.animeDetails.similarAnime instanceof Object
+            ? req.animeDetails.similarAnime.animeId
+            : req.animeDetails.similarAnime || null,
       };
     } catch (e) {
       console.log("Error in post Anime service", e);

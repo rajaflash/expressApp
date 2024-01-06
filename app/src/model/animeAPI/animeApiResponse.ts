@@ -4,7 +4,7 @@ export interface AnimeApiResponse {
   readonly startDate: string;
   readonly endDate: string;
   readonly engTitle: string;
-  readonly similarAnime: Array<similarAnime>;
+  readonly similarAnime: Array<similarAnime> | Record<string, string> | string;
   readonly relatedAnime: relatedAnime | string;
 }
 
@@ -22,5 +22,5 @@ interface relatedAnime {
 export interface postAnimeResponse {
   readonly customerId: string;
   readonly message: string;
-  readonly animeId: Array<string>;
+  readonly similarAnimeIds: Array<string> | null | string;
 }

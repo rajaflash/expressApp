@@ -5,14 +5,16 @@ export interface AnimeApiRequest {
   readonly customerId: string;
 }
 
-export interface PostAnimeRequest extends AnimeApiRequest {
+interface PostAnimeRequests {
   readonly animeDetails: AnimeApiResponse;
-  readonly customerDetails: Array<customerDetails>;
+  readonly customerDetails?: customerDetails;
 }
 
 interface customerDetails {
   readonly firstName: string;
   readonly lastName: string;
   readonly mobileNumber: string;
-  readonly animeGenrePreference: Array<string>;
+  readonly animeGenrePreference?: Array<string> | null;
 }
+
+export type PostAnimeRequest = PostAnimeRequests & Omit<AnimeApiRequest, 'animeId'>
